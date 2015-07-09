@@ -1,9 +1,14 @@
-html, body{margin:0; padding:100px 0 0;}
+html, body{margin:0; padding:100px 0 0; font-family: 'Open Sans', sans-serif;}
 
 #content{max-width:1200px; margin:0 auto;}
-
-textarea{border:1px solid #ccc; background-color:#fff; width:400px; resize:none; outline:0 !important; font-size:16px; line-height:22px; padding:5px 10px;
+section{margin-bottom:50px;}
+textarea, textarea.style-1{border:1px solid #ccc; background-color:#fff; width:400px; resize:none; outline:0 !important; font-size:16px; line-height:22px; padding:5px 10px; font-family: 'Open Sans', sans-serif;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   border-radius: 5px;
+}
+textarea.style-2{border:0; border-bottom:1px solid #ccc; padding:5px 0; font-size:22px; line-height:27px; font-family: 'Amiri', serif; color:#666;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
 }
