@@ -45,6 +45,7 @@ Autogrow.prototype.update = function(hardUpdate){
   if(hardUpdate){
     _this.createMirror();
     _this.registerEventListeners();
+    _this.calculateTextareaHeight();
   }
   
   return true;
@@ -53,7 +54,7 @@ Autogrow.prototype.update = function(hardUpdate){
 Autogrow.prototype.createMirror = function(){
   var _this = this;
   var textareaStyles = window.getComputedStyle(_this.elements.textarea, null);
-  var copyStyles = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'textIndent', 'width'];
+  var copyStyles = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'letterSpacing', 'textIndent', 'whiteSpace', 'wordWrap'];
   
   _this.destroyMirror();
   
@@ -64,12 +65,13 @@ Autogrow.prototype.createMirror = function(){
   _this.elements.mirror.style.position = 'absolute';
   _this.elements.mirror.style.zIndex = -1;
   _this.elements.mirror.style.wordBreak = 'break-word';
+  _this.elements.mirror.style.width = (parseInt(_this.elements.textarea.offsetWidth, 10) - parseInt(textareaStyles.paddingLeft, 10) - parseInt(textareaStyles.paddingRight, 10) - parseInt(textareaStyles.borderLeftWidth, 10) - parseInt(textareaStyles.borderRightWidth, 10) - 10) + 'px';
   
   copyStyles.forEach(function(item){
      _this.elements.mirror.style[item] = textareaStyles[item];
   });
   
-  // _this.elements.textarea.style.overflow = 'hidden';
+  _this.elements.textarea.style.overflow = 'hidden';
   _this.elements.textarea.style.height = 'auto';
   _this.elements.textarea.rows = _this.options.minRows;
   
