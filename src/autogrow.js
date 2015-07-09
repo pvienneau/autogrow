@@ -40,6 +40,8 @@ Autogrow.prototype.createMirror = function(){
   _this.elements.mirror.style.position = 'absolute';
   _this.elements.mirror.style.zIndex = -1;
   
+  _this.elements.textarea.style.overflow = 'hidden';
+  
   copyStyles.forEach(function(item){
      _this.elements.mirror.style[item] = textareaStyles[item];
   });
@@ -66,8 +68,8 @@ Autogrow.prototype.registerEventListeners = function(){
   var _this = this;
 
   _this.unregisterEventListeners();
-  
-  _this.elements.textarea.addEventListener('keyup', function(){_this.calculateTextareaHeight()});
+
+  _this.elements.textarea.addEventListener('keydown', function(event){_this.keyDownHandler(event);});
   
   return true;
 }
@@ -75,16 +77,24 @@ Autogrow.prototype.registerEventListeners = function(){
 Autogrow.prototype.unregisterEventListeners = function(){
   var _this = this;
   
-  _this.elements.textarea.removeEventListener('keyup', function(){_this.calculateTextareaHeight()});
+  _this.elements.textarea.removeEventListener('keydown', function(event){_this.keyDownHandler(event);});
   
   return true;
 }
 
-Autogrow.prototype.calculateTextareaHeight = function(e){
+Autogrow.prototype.keyDownHandler = function(event){
+   var _this = this;
+
+   _this.calculateTextareaHeight((/^U\+\d*$/.test(event.keyIdentifier)?event.which:false));
+}
+
+Autogrow.prototype.calculateTextareaHeight = function(keyWhich){
   var _this = this;
   var calculatedHeight = parseInt(_this.elements.mirror.style.minHeight, 10);
-  
-  _this.copyTextToMirror();
+
+  if(typeof keyWhich === 'undefined') keyWhich = false;
+
+  _this.copyTextToMirror(String.fromCharCode(keyWhich));
 
   calculatedHeight = Math.max(parseInt(_this.elements.mirror.clientHeight, 10), parseInt(calculatedHeight, 10));
 
@@ -93,11 +103,13 @@ Autogrow.prototype.calculateTextareaHeight = function(e){
   return true;
 }
 
-Autogrow.prototype.copyTextToMirror = function(){
+Autogrow.prototype.copyTextToMirror = function(extraKey){
   var _this = this;
   var textareaValue = _this.elements.textarea.value;
   
-  _this.elements.mirror.innerHTML = textareaValue;
-
+  if(typeof extraKey === 'undefined') extraKey = '';
+  
+  _this.elements.mirror.innerHTML = textareaValue+extraKey;
+  
   return true;
 }
