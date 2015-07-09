@@ -1,12 +1,26 @@
 //constructor
-Autogrow = function(element){
+Autogrow = function(element, options){
   var _this = this;
-
+  var defaultOptions = {
+    'minHeight': 0
+  };
+  
+  var extend = function(){
+    for(var i=1; i<arguments.length; i++){
+      for(var key in arguments[i]){
+        if(arguments[i].hasOwnProperty(key))  arguments[0][key] = arguments[i][key];
+      }
+    }
+        
+    return arguments[0];
+  }
+  
   if(typeof element === 'undefined' || element.tagName.toLowerCase() !== 'textarea') console.warn('You must define a textarea to deploy the autogrow onto.')
   
   _this.elements = {
     'textarea': element
   }
+  _this.options = extend(defaultOptions, options);
   
   _this.update(true);
   
@@ -46,8 +60,8 @@ Autogrow.prototype.createMirror = function(){
      _this.elements.mirror.style[item] = textareaStyles[item];
   });
 
-  _this.elements.mirror.style.minHeight = (parseInt(textareaStyles.minHeight, 10) || parseInt(textareaStyles.height, 10) || parseInt(_this.elements.mirror.style.lineHeight, 10))+'px';
-  
+  _this.elements.mirror.style.minHeight = (_this.options.minHeight || parseInt(textareaStyles.minHeight, 10) || parseInt(textareaStyles.height, 10) || parseInt(_this.elements.mirror.style.lineHeight, 10))+'px';
+
   document.body.appendChild(_this.elements.mirror);
   
   return true;
