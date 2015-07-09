@@ -2,9 +2,10 @@
 Autogrow = function(element, options){
   var _this = this;
   
-  //private variables
+  //private variablesun
   var defaultOptions = {
-    'minRows': 1
+    'minRows': 1,
+    'maxRows': false
   };
   
   //private methods
@@ -96,7 +97,7 @@ Autogrow.prototype.registerEventListeners = function(){
 
   _this.unregisterEventListeners();
 
-  _this.elements.textarea.addEventListener('keydown', function(event){_this.keyDownHandler(event);});
+  _this.elements.textarea.addEventListener('input', function(event){_this.keyDownHandler(event);});
   
   return true;
 }
@@ -104,39 +105,40 @@ Autogrow.prototype.registerEventListeners = function(){
 Autogrow.prototype.unregisterEventListeners = function(){
   var _this = this;
   
-  _this.elements.textarea.removeEventListener('keydown', function(event){_this.keyDownHandler(event);});
+  _this.elements.textarea.removeEventListener('input', function(event){_this.keyDownHandler(event);});
   
   return true;
 }
 
-Autogrow.prototype.keyDownHandler = function(event){
+Autogrow.prototype.keyDownHandler = function(){
    var _this = this;
 
-   _this.calculateTextareaHeight((/^U\+\d*$/.test(event.keyIdentifier)?event.which:false));
+   _this.calculateTextareaHeight();
 }
 
-Autogrow.prototype.calculateTextareaHeight = function(keyWhich){
+Autogrow.prototype.calculateTextareaHeight = function(){
   var _this = this;
-  var calculatedHeight = parseInt(_this.elements.mirror.style.minHeight, 10);
+  var calculatedHeight = parseInt(_this.elements.mirror.style.minHeight, 10), calculatedRows;
 
-  if(typeof keyWhich === 'undefined') keyWhich = false;
-
-  _this.copyTextToMirror(String.fromCharCode(keyWhich));
+  _this.copyTextToMirror();
 
   calculatedHeight = Math.max(parseInt(_this.elements.mirror.clientHeight, 10), parseInt(calculatedHeight, 10));
   
-  _this.elements.textarea.rows = calculatedHeight/_this.options.rowHeight;
-  
+  calculatedRows = Math.max(_this.options.minRows, calculatedHeight/_this.options.rowHeight);
+  if(_this.options.maxRows) calculatedRows = math.min(_this.options.maxRows, calculatedHeight);
+
+  _this.elements.textarea.rows = calculatedRows;
+
   return true;
 }
 
-Autogrow.prototype.copyTextToMirror = function(extraKey){
+Autogrow.prototype.copyTextToMirror = function(){
   var _this = this;
   var textareaValue = _this.elements.textarea.value;
   
   if(typeof extraKey === 'undefined') extraKey = '';
   
-  _this.elements.mirror.innerHTML = textareaValue+extraKey;
+  _this.elements.mirror.innerHTML = textareaValue;
   
   return true;
 }
