@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+  </head>
+  <body>
+    <div id="content">
+      <textarea></textarea>
+    </div>
+    <script src="../src/autogrow.js"></script>
+    <script>
+      (function(){
+        var textareas = document.getElementsByTagName('textarea');
+
+        for(var ii = 0; ii < textareas.length; ii++){
+          new Autogrow(textareas[ii]);
+        }
+      }())
+    </script>
+  </body>
+</html>
