@@ -120,6 +120,7 @@ Autogrow.prototype.keyDownHandler = function(){
 Autogrow.prototype.calculateTextareaHeight = function(){
   var _this = this;
   var calculatedHeight = parseInt(_this.elements.mirror.style.minHeight, 10), calculatedRows;
+  var oldRowValue = _this.elements.textarea.rows;
 
   _this.copyTextToMirror();
 
@@ -128,7 +129,11 @@ Autogrow.prototype.calculateTextareaHeight = function(){
   calculatedRows = Math.max(_this.options.minRows, calculatedHeight/_this.options.rowHeight);
   if(_this.options.maxRows) calculatedRows = math.min(_this.options.maxRows, calculatedHeight);
 
-  _this.elements.textarea.rows = calculatedRows;
+  if(oldRowValue != calculatedRows){
+    _this.elements.textarea.rows = calculatedRows;
+  
+    _this.throwEvent('rowChange', _this.elements.textarea);
+  }
 
   return true;
 }
@@ -142,4 +147,11 @@ Autogrow.prototype.copyTextToMirror = function(){
   _this.elements.mirror.innerHTML = textareaValue;
   
   return true;
+}
+
+Autogrow.prototype.throwEvent = function(eventName, element){
+  var _this = this;
+  if(typeof eventName === 'undefined' || typeof element === 'undefined') return false;
+
+  element.dispatchEvent(new Event(eventName));
 }
