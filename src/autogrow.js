@@ -1,10 +1,13 @@
 //constructor
 Autogrow = function(element, options){
   var _this = this;
+  
+  //private variables
   var defaultOptions = {
-    'minHeight': 0
+    'minRows': 1
   };
   
+  //private methods
   var extend = function(){
     for(var i=1; i<arguments.length; i++){
       for(var key in arguments[i]){
@@ -15,12 +18,18 @@ Autogrow = function(element, options){
     return arguments[0];
   }
   
+  var cleanOptions = function(options){
+    if(typeof options.minRows !== 'undefined') options.minRows = Math.max(1, options.minRows);
+    
+    return options;
+  }
+  
   if(typeof element === 'undefined' || element.tagName.toLowerCase() !== 'textarea') console.warn('You must define a textarea to deploy the autogrow onto.')
   
   _this.elements = {
     'textarea': element
   }
-  _this.options = extend(defaultOptions, options);
+  _this.options = extend(defaultOptions, cleanOptions(options));
   
   _this.update(true);
   
@@ -54,11 +63,15 @@ Autogrow.prototype.createMirror = function(){
   _this.elements.mirror.style.position = 'absolute';
   _this.elements.mirror.style.zIndex = -1;
   
-  _this.elements.textarea.style.overflow = 'hidden';
-  
   copyStyles.forEach(function(item){
      _this.elements.mirror.style[item] = textareaStyles[item];
   });
+  
+  _this.elements.textarea.style.overflow = 'hidden';
+  _this.elements.textarea.style.height = 'auto';
+  _this.elements.textarea.rows = _this.options.minRows;
+  
+  _this.options.rowHeight = parseInt(_this.elements.mirror.style.lineHeight, 10);
 
   _this.elements.mirror.style.minHeight = (_this.options.minHeight || parseInt(textareaStyles.minHeight, 10) || parseInt(textareaStyles.height, 10) || parseInt(_this.elements.mirror.style.lineHeight, 10))+'px';
 
@@ -111,8 +124,8 @@ Autogrow.prototype.calculateTextareaHeight = function(keyWhich){
   _this.copyTextToMirror(String.fromCharCode(keyWhich));
 
   calculatedHeight = Math.max(parseInt(_this.elements.mirror.clientHeight, 10), parseInt(calculatedHeight, 10));
-
-  _this.elements.textarea.style.height = calculatedHeight+'px';
+  
+  _this.elements.textarea.rows = calculatedHeight/_this.options.rowHeight;
   
   return true;
 }
