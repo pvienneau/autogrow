@@ -63,12 +63,13 @@ Autogrow.prototype.createMirror = function(){
   _this.elements.mirror.style.visibility = 'hidden';
   _this.elements.mirror.style.position = 'absolute';
   _this.elements.mirror.style.zIndex = -1;
+  _this.elements.mirror.style.wordBreak = 'break-word';
   
   copyStyles.forEach(function(item){
      _this.elements.mirror.style[item] = textareaStyles[item];
   });
   
-  _this.elements.textarea.style.overflow = 'hidden';
+  // _this.elements.textarea.style.overflow = 'hidden';
   _this.elements.textarea.style.height = 'auto';
   _this.elements.textarea.rows = _this.options.minRows;
   
