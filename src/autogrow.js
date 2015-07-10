@@ -57,8 +57,11 @@ Autogrow.prototype.update = function(hardUpdate){
 Autogrow.prototype.createMirror = function(){
   var _this = this;
   var textareaStyles = window.getComputedStyle(_this.elements.textarea, null);
+
+  var textareaWidth = (parseInt(_this.elements.textarea.offsetWidth, 10) - parseInt(textareaStyles.paddingLeft, 10) - parseInt(textareaStyles.paddingRight, 10) - parseInt(textareaStyles.borderLeftWidth, 10) - parseInt(textareaStyles.borderRightWidth, 10)) + 'px';
   var forceStylesBoth = {
-    'overflow':'hidden',
+    'overflowY': 'hidden',
+    'overflowX': 'hidden',
     'height': 'auto',
     'textRendering': 'optimizeSpeed',
     'display': textareaStyles['display']
@@ -67,9 +70,11 @@ Autogrow.prototype.createMirror = function(){
     'visibility': 'hidden',
     'position': 'absolute',
     'zIndex': -1,
-    'width': (parseInt(_this.elements.textarea.offsetWidth, 10) - parseInt(textareaStyles.paddingLeft, 10) - parseInt(textareaStyles.paddingRight, 10) - parseInt(textareaStyles.borderLeftWidth, 10) - parseInt(textareaStyles.borderRightWidth, 10)) + 'px'
+    'width': textareaWidth,
+    'left': '-9999px',
+    'top': '-9999px'
   };
-  var copyStyles = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'fontVariant', 'fontStretch', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'wordBreak', 'letterSpacing', 'textIndent', 'whiteSpace', 'wordWrap'];
+  var copyStyles = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'fontVariant', 'fontStretch', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'wordBreak', 'letterSpacing', 'textIndent', 'whiteSpace', 'wordWrap', 'paddingRight', 'paddingLeft', 'borderRightWidth', 'borderRightStyle', 'borderLeftWidth', 'borderLeftStyle'];
   
   _this.destroyMirror();
   
@@ -145,7 +150,15 @@ Autogrow.prototype.calculateTextareaHeight = function(){
   calculatedHeight = Math.max(parseInt(_this.elements.mirror.clientHeight, 10), parseInt(calculatedHeight, 10));
   
   calculatedRows = Math.max(_this.options.minRows, calculatedHeight/_this.options.rowHeight);
-  if(_this.options.maxRows) calculatedRows = math.min(_this.options.maxRows, calculatedHeight);
+  if(_this.options.maxRows){
+    calculatedRows = Math.min(_this.options.maxRows, calculatedRows);
+    
+    if(calculatedRows === _this.options.maxRows){
+      _this.elements.textarea.style.overflowY = 'auto';
+    }else{
+      _this.elements.textarea.style.overflowY = 'hidden';
+    }
+  }
 
   if(oldRowValue != calculatedRows){
     _this.elements.textarea.rows = calculatedRows;
