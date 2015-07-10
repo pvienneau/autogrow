@@ -54,25 +54,38 @@ Autogrow.prototype.update = function(hardUpdate){
 Autogrow.prototype.createMirror = function(){
   var _this = this;
   var textareaStyles = window.getComputedStyle(_this.elements.textarea, null);
-  var copyStyles = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'letterSpacing', 'textIndent', 'whiteSpace', 'wordWrap'];
+  var forceStylesBoth = {
+    'overflow':'hidden',
+    'height': 'auto',
+    'textRendering': 'optimizeSpeed',
+    'display': textareaStyles['display']
+  };
+  var forceStylesMirror = {
+    'visibility': 'hidden',
+    'position': 'absolute',
+    'zIndex': -1,
+    'width': (parseInt(_this.elements.textarea.offsetWidth, 10) - parseInt(textareaStyles.paddingLeft, 10) - parseInt(textareaStyles.paddingRight, 10) - parseInt(textareaStyles.borderLeftWidth, 10) - parseInt(textareaStyles.borderRightWidth, 10)) + 'px'
+  };
+  var copyStyles = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'fontVariant', 'fontStretch', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'wordBreak', 'letterSpacing', 'textIndent', 'whiteSpace', 'wordWrap'];
   
   _this.destroyMirror();
   
   _this.elements.mirror = document.createElement("div");
   
-  _this.elements.mirror.style.display = 'block',
-  _this.elements.mirror.style.visibility = 'hidden';
-  _this.elements.mirror.style.position = 'absolute';
-  _this.elements.mirror.style.zIndex = -1;
-  _this.elements.mirror.style.wordBreak = 'break-word';
-  _this.elements.mirror.style.width = (parseInt(_this.elements.textarea.offsetWidth, 10) - parseInt(textareaStyles.paddingLeft, 10) - parseInt(textareaStyles.paddingRight, 10) - parseInt(textareaStyles.borderLeftWidth, 10) - parseInt(textareaStyles.borderRightWidth, 10) - 10) + 'px';
+  for(property in forceStylesBoth){
+    _this.elements.textarea.style[property] = forceStylesBoth[property];
+    _this.elements.mirror.style[property] = forceStylesBoth[property];
+  }
+  
+  for(property in forceStylesMirror){
+    _this.elements.mirror.style[property] = forceStylesMirror[property];
+  }
   
   copyStyles.forEach(function(item){
      _this.elements.mirror.style[item] = textareaStyles[item];
+     _this.elements.textarea.style[item] = textareaStyles[item];
   });
-  
-  _this.elements.textarea.style.overflow = 'hidden';
-  _this.elements.textarea.style.height = 'auto';
+
   _this.elements.textarea.rows = _this.options.minRows;
   
   _this.options.rowHeight = parseInt(_this.elements.mirror.style.lineHeight, 10);
