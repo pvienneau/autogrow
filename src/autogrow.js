@@ -6,7 +6,8 @@ Autogrow = function(element, options){
   //private variablesun
   var defaultOptions = {
     'minRows': 1,
-    'maxRows': false
+    'maxRows': false,
+    'scrollOnOverflow': true
   };
   
   //private methods
@@ -48,7 +49,7 @@ Autogrow.prototype.update = function(hardUpdate){
   if(hardUpdate){
     _this.createMirror();
     _this.registerEventListeners();
-    _this.calculateTextareaHeight();
+    _this.updateTextareaRowCount();
   }
   
   return true;
@@ -72,7 +73,10 @@ Autogrow.prototype.createMirror = function(){
     'zIndex': -1,
     'width': textareaWidth,
     'left': '-9999px',
-    'top': '-9999px'
+    'top': '-9999px',
+    'visibility':'visible',
+    'top':'auto',
+    'left':'auto'
   };
   var copyStyles = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'fontVariant', 'fontStretch', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'wordBreak', 'letterSpacing', 'textIndent', 'whiteSpace', 'wordWrap', 'paddingRight', 'paddingLeft', 'borderRightWidth', 'borderRightStyle', 'borderLeftWidth', 'borderLeftStyle'];
   
@@ -121,43 +125,57 @@ Autogrow.prototype.registerEventListeners = function(){
 
   _this.unregisterEventListeners();
 
-  _this.elements.textarea.addEventListener('input', function(event){_this.keyDownHandler(event);});
+  _this.elements.textarea.addEventListener('keydown', function(event){_this.keyDownHandler(event);});
+  _this.elements.textarea.addEventListener('input', function(event){_this.keyPressHandler(event);});
   
   return true;
 };
 
-Autogrow.prototype.unregisterEventListeners = function(){
+Autogrow.prototype.unregisterEventListeners = function(event){
   var _this = this;
   
-  _this.elements.textarea.removeEventListener('input', function(event){_this.keyDownHandler(event);});
+  _this.elements.textarea.removeEventListener('keydown', function(event){_this.keyDownHandler(event);});
+  _this.elements.textarea.removeEventListener('input', function(event){_this.keyPressHandler(event);});
   
   return true;
 };
 
-Autogrow.prototype.keyDownHandler = function(){
+Autogrow.prototype.keyDownHandler = function(event){
+  var _this = this;
+  
+  /*
+    To verify that we can perform the calculation to block the user from surpassing the allocated rows on a textarea, we must validate the following conditions:
+    1. The option 'scrollOnOverflow' is indeed set to false, disallowing a scroll to happen on overflow;
+    2. The textarea has reached its maximum number of rows, and that this maximum value is indeed defined;
+    3. The key is not one of the following (Meta, Control, Shift, Alt), which would otherwise not append a value to the textarea
+    4. The key value is indeed a character, as opposed to keys such as the arrows, backspace, etc.
+  */
+  if(!_this.options.scrollOnOverflow && (_this.elements.textarea.rows == _this.options.maxRows) && !(event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) && /^U\+\d{3}\w$/.test(event.keyIdentifier)){
+    _this.copyTextToMirror('W'); // push generically widest letter as we can't garantee to convert the keycode to the correct character without doing some mad calculations (see http://stackoverflow.com/a/13127566/751564)
+
+    if(_this.elements.textarea.rows != _this.getTextareaCalculatedRows(false)) event.preventDefault();
+  }
+}
+
+Autogrow.prototype.keyPressHandler = function(event){
    var _this = this;
 
-   _this.calculateTextareaHeight();
+   //_this.calculateTextareaHeight();
+   _this.updateTextareaRowCount();
 };
 
-Autogrow.prototype.calculateTextareaHeight = function(){
+Autogrow.prototype.updateTextareaRowCount = function(extraCharacter){
   var _this = this;
-  var calculatedHeight = parseInt(_this.elements.mirror.style.minHeight, 10), calculatedRows;
   var oldRowValue = _this.elements.textarea.rows;
 
-  _this.copyTextToMirror();
+  _this.copyTextToMirror(extraCharacter);
 
-  calculatedHeight = Math.max(parseInt(_this.elements.mirror.clientHeight, 10), parseInt(calculatedHeight, 10));
-  
-  calculatedRows = Math.max(_this.options.minRows, calculatedHeight/_this.options.rowHeight);
-  if(_this.options.maxRows){
-    calculatedRows = Math.min(_this.options.maxRows, calculatedRows);
-    
-    if(calculatedRows === _this.options.maxRows){
-      _this.elements.textarea.style.overflowY = 'auto';
-    }else{
-      _this.elements.textarea.style.overflowY = 'hidden';
-    }
+  var calculatedRows = _this.getTextareaCalculatedRows();
+
+  if(calculatedRows >= _this.options.maxRows && _this.options.scrollOnOverflow){
+    _this.elements.textarea.style.overflowY = 'auto';
+  }else{
+    _this.elements.textarea.style.overflowY = 'hidden';
   }
 
   if(oldRowValue != calculatedRows){
@@ -168,16 +186,34 @@ Autogrow.prototype.calculateTextareaHeight = function(){
   return true;
 };
 
-Autogrow.prototype.copyTextToMirror = function(){
+Autogrow.prototype.copyTextToMirror = function(extraCharacter){
   var _this = this;
   var textareaValue = _this.elements.textarea.value;
+  extraCharacter = extraCharacter || '';
   
-  if(typeof extraKey === 'undefined') extraKey = '';
-  
-  _this.elements.mirror.innerHTML = textareaValue;
+  _this.elements.mirror.innerHTML = textareaValue+extraCharacter;
   
   return true;
 };
+
+Autogrow.prototype.getTextareaCalculatedRows = function(enforceBoundaries){
+  var _this = this;
+  if(typeof enforceBoundaries === 'undefined') enforceBoundaries = true;
+  
+  var calculatedRows, calculatedHeight = parseInt(_this.elements.mirror.style.minHeight, 10), calculatedRows;
+  calculatedHeight = Math.max(parseInt(_this.elements.mirror.clientHeight, 10), parseInt(calculatedHeight, 10));
+  
+  calculatedRows = calculatedHeight/_this.options.rowHeight;
+
+  if(enforceBoundaries){
+    calculatedRows = Math.max(_this.options.minRows, calculatedRows);
+    if(_this.options.maxRows){
+      calculatedRows = Math.min(_this.options.maxRows, calculatedRows);
+    }
+  }
+
+  return calculatedRows;
+}
 
 Autogrow.prototype.throwEvent = function(eventName, element){
   var _this = this;
