@@ -1,6 +1,7 @@
 //constructor
 Autogrow = function(element, options){
   var _this = this;
+  options = options || {};
   
   //private variablesun
   var defaultOptions = {
@@ -20,6 +21,8 @@ Autogrow = function(element, options){
   }
   
   var cleanOptions = function(options){
+    if(!options) return {};
+    
     if(typeof options.minRows !== 'undefined') options.minRows = Math.max(1, options.minRows);
     
     return options;
@@ -35,7 +38,7 @@ Autogrow = function(element, options){
   _this.update(true);
   
   return _this;
-}
+};
 
 Autogrow.prototype.update = function(hardUpdate){
   var _this = this;
@@ -49,7 +52,7 @@ Autogrow.prototype.update = function(hardUpdate){
   }
   
   return true;
-}
+};
 
 Autogrow.prototype.createMirror = function(){
   var _this = this;
@@ -95,7 +98,7 @@ Autogrow.prototype.createMirror = function(){
   document.body.appendChild(_this.elements.mirror);
   
   return true;
-}
+};
 
 Autogrow.prototype.destroyMirror = function(){
   var _this = this;
@@ -106,7 +109,7 @@ Autogrow.prototype.destroyMirror = function(){
   delete _this.elements.mirror;
 
   return true;
-}
+};
 
 Autogrow.prototype.registerEventListeners = function(){
   var _this = this;
@@ -116,7 +119,7 @@ Autogrow.prototype.registerEventListeners = function(){
   _this.elements.textarea.addEventListener('input', function(event){_this.keyDownHandler(event);});
   
   return true;
-}
+};
 
 Autogrow.prototype.unregisterEventListeners = function(){
   var _this = this;
@@ -124,19 +127,19 @@ Autogrow.prototype.unregisterEventListeners = function(){
   _this.elements.textarea.removeEventListener('input', function(event){_this.keyDownHandler(event);});
   
   return true;
-}
+};
 
 Autogrow.prototype.keyDownHandler = function(){
    var _this = this;
 
    _this.calculateTextareaHeight();
-}
+};
 
 Autogrow.prototype.calculateTextareaHeight = function(){
   var _this = this;
   var calculatedHeight = parseInt(_this.elements.mirror.style.minHeight, 10), calculatedRows;
   var oldRowValue = _this.elements.textarea.rows;
-
+console.log(_this.throwEvent);
   _this.copyTextToMirror();
 
   calculatedHeight = Math.max(parseInt(_this.elements.mirror.clientHeight, 10), parseInt(calculatedHeight, 10));
@@ -146,12 +149,11 @@ Autogrow.prototype.calculateTextareaHeight = function(){
 
   if(oldRowValue != calculatedRows){
     _this.elements.textarea.rows = calculatedRows;
-  
     _this.throwEvent('rowChange', _this.elements.textarea);
   }
 
   return true;
-}
+};
 
 Autogrow.prototype.copyTextToMirror = function(){
   var _this = this;
@@ -162,11 +164,11 @@ Autogrow.prototype.copyTextToMirror = function(){
   _this.elements.mirror.innerHTML = textareaValue;
   
   return true;
-}
+};
 
 Autogrow.prototype.throwEvent = function(eventName, element){
   var _this = this;
   if(typeof eventName === 'undefined' || typeof element === 'undefined') return false;
 
   element.dispatchEvent(new Event(eventName));
-}
+};
