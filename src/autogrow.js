@@ -28,8 +28,8 @@ Autogrow = function(element, options){
     return options;
   }
   
-  if(typeof element === 'undefined' || element.tagName.toLowerCase() !== 'textarea') console.warn('You must define a textarea to deploy the autogrow onto.')
-  
+  if(typeof element === 'undefined' || element.tagName.toLowerCase() !== 'textarea') return console.warn('You must define a textarea to deploy the autogrow onto.')
+
   _this.elements = {
     'textarea': element
   }
@@ -139,7 +139,7 @@ Autogrow.prototype.calculateTextareaHeight = function(){
   var _this = this;
   var calculatedHeight = parseInt(_this.elements.mirror.style.minHeight, 10), calculatedRows;
   var oldRowValue = _this.elements.textarea.rows;
-console.log(_this.throwEvent);
+
   _this.copyTextToMirror();
 
   calculatedHeight = Math.max(parseInt(_this.elements.mirror.clientHeight, 10), parseInt(calculatedHeight, 10));
