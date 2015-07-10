@@ -172,3 +172,15 @@ Autogrow.prototype.throwEvent = function(eventName, element){
 
   element.dispatchEvent(new Event(eventName));
 };
+
+//call constructor
+(function(){
+  var textareas = document.getElementsByTagName('textarea');
+
+  for(var ii = 0; ii < textareas.length; ii++){
+    var textarea = textareas[ii];
+    if(textarea.dataset.autogrow){
+      new Autogrow(textarea);
+    }
+  }
+}());
