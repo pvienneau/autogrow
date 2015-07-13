@@ -50,8 +50,9 @@ Autogrow.prototype.update = function(hardUpdate){
   
   if(hardUpdate){
     _this.registerEventListeners();
-    _this.updateTextareaRowCount();
   }
+  
+  _this.updateTextareaRowCount();
   
   return true;
 };
@@ -197,10 +198,19 @@ Autogrow.prototype.copyTextToMirror = function(extraCharacter){
   
   if(textareaValue.match(/\n$/)) textareaValue += '.';
   
-  _this.elements.mirror.innerHTML = textareaValue+extraCharacter;
+  _this.writeToMirror(textareaValue+extraCharacter);
 
   return true;
 };
+
+Autogrow.prototype.writeToMirror = function(str){
+  var _this = this;
+  str = str || '';
+  
+  _this.elements.mirror.innerHTML = str;
+  
+  return str;
+}
 
 Autogrow.prototype.getTextareaCalculatedRows = function(enforceBoundaries){
   var _this = this;
@@ -214,11 +224,29 @@ Autogrow.prototype.getTextareaCalculatedRows = function(enforceBoundaries){
   if(enforceBoundaries){
     calculatedRows = Math.max(_this.options.minRows, calculatedRows);
     if(_this.options.maxRows){
+      if(calculatedRows > _this.options.maxRows && !_this.options.scrollOnOverflow) _this.trimTextareaValue(_this.options.maxRows);
+      
       calculatedRows = Math.min(_this.options.maxRows, calculatedRows);
     }
   }
 
   return calculatedRows;
+}
+
+Autogrow.prototype.trimTextareaValue = function(maximumRows){
+  var _this = this;
+  maximumRows = maximumRows || _this.options.maxRows || _this.options.minRows || false;
+
+  if(!maximumRows) return false;
+  
+  var value = _this.elements.textarea.value;
+
+  while(_this.getTextareaCalculatedRows(false) > maximumRows){
+    value = value.substring(0, value.length-1);
+    _this.writeToMirror(value);
+  }
+  
+  _this.elements.textarea.value = value;
 }
 
 Autogrow.prototype.throwEvent = function(eventName, element){
