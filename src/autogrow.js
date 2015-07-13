@@ -73,10 +73,7 @@ Autogrow.prototype.createMirror = function(){
     'zIndex': -1,
     'width': textareaWidth,
     'left': '-9999px',
-    'top': '-9999px',
-    'visibility':'visible',
-    'top':'auto',
-    'left':'auto'
+    'top': '-9999px'
   };
   var copyStyles = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'fontVariant', 'fontStretch', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'wordBreak', 'letterSpacing', 'textIndent', 'whiteSpace', 'wordWrap', 'paddingRight', 'paddingLeft', 'borderRightWidth', 'borderRightStyle', 'borderLeftWidth', 'borderLeftStyle'];
   
