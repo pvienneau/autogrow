@@ -46,8 +46,9 @@ Autogrow.prototype.update = function(hardUpdate){
   
   if(typeof hardUpdate === 'undefined') hardUpdate = false;
   
+  _this.createMirror();
+  
   if(hardUpdate){
-    _this.createMirror();
     _this.registerEventListeners();
     _this.updateTextareaRowCount();
   }
