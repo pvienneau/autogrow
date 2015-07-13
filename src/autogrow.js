@@ -139,25 +139,31 @@ Autogrow.prototype.unregisterEventListeners = function(event){
 
 Autogrow.prototype.keyDownHandler = function(event){
   var _this = this;
-  
+
   /*
     To verify that we can perform the calculation to block the user from surpassing the allocated rows on a textarea, we must validate the following conditions:
     1. The option 'scrollOnOverflow' is indeed set to false, disallowing a scroll to happen on overflow;
     2. The textarea has reached its maximum number of rows, and that this maximum value is indeed defined;
     3. The key is not one of the following (Meta, Control, Shift, Alt), which would otherwise not append a value to the textarea
     4. The key value is indeed a character, as opposed to keys such as the arrows, backspace, etc.
+    
+    Exceptions include:
+    a. Force check if 'Enter' is pressed (new line keys)
+    b. Abort if 'Backspace' or 'Delete' is pressed (content deletion keys)
   */
-  if(!_this.options.scrollOnOverflow && (_this.elements.textarea.rows == _this.options.maxRows) && !(event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) && /^U\+\d{3}\w$/.test(event.keyIdentifier)){
-    _this.copyTextToMirror('W'); // push generically widest letter as we can't garantee to convert the keycode to the correct character without doing some mad calculations (see http://stackoverflow.com/a/13127566/751564)
+  if(((!_this.options.scrollOnOverflow && (_this.elements.textarea.rows == _this.options.maxRows) && ((!(event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) && /^U\+\d{3}\w$/.test(event.keyIdentifier)))) || event.which == 13) && (event.which != 8 && event.which != 46)){
 
-    if(_this.elements.textarea.rows != _this.getTextareaCalculatedRows(false)) event.preventDefault();
+    _this.copyTextToMirror('W'); // push generically widest letter as we can't garantee to convert the keycode to the correct character without doing some mad calculations (see http://stackoverflow.com/a/13127566/751564)
+    if(
+      _this.getTextareaCalculatedRows(false) > _this.elements.textarea.rows ||
+      (_this.getTextareaCalculatedRows(false) >= _this.options.maxRows && event.which == 13)
+    ) event.preventDefault();
   }
 }
 
 Autogrow.prototype.keyPressHandler = function(event){
    var _this = this;
 
-   //_this.calculateTextareaHeight();
    _this.updateTextareaRowCount();
 };
 
@@ -169,7 +175,7 @@ Autogrow.prototype.updateTextareaRowCount = function(extraCharacter){
 
   var calculatedRows = _this.getTextareaCalculatedRows();
 
-  if(calculatedRows >= _this.options.maxRows && _this.options.scrollOnOverflow){
+  if(_this.options.maxRows && calculatedRows >= _this.options.maxRows && _this.options.scrollOnOverflow){
     _this.elements.textarea.style.overflowY = 'auto';
   }else{
     _this.elements.textarea.style.overflowY = 'hidden';
@@ -188,8 +194,10 @@ Autogrow.prototype.copyTextToMirror = function(extraCharacter){
   var textareaValue = _this.elements.textarea.value;
   extraCharacter = extraCharacter || '';
   
-  _this.elements.mirror.innerHTML = textareaValue+extraCharacter;
+  if(textareaValue.match(/\n$/)) textareaValue += '.';
   
+  _this.elements.mirror.innerHTML = textareaValue+extraCharacter;
+
   return true;
 };
 
