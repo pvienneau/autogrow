@@ -7,7 +7,8 @@ Autogrow = function(element, options){
   var defaultOptions = {
     'minRows': 1,
     'maxRows': false,
-    'scrollOnOverflow': true
+    'scrollOnOverflow': true,
+    'debug': false
   };
   
   //private methods
@@ -60,8 +61,25 @@ Autogrow.prototype.update = function(hardUpdate){
 Autogrow.prototype.createMirror = function(){
   var _this = this;
   var textareaStyles = window.getComputedStyle(_this.elements.textarea, null);
+  var userAgent = _this.getUserAgent();
 
-  var textareaWidth = (parseInt(_this.elements.textarea.offsetWidth, 10) - parseInt(textareaStyles.paddingLeft, 10) - parseInt(textareaStyles.paddingRight, 10) - parseInt(textareaStyles.borderLeftWidth, 10) - parseInt(textareaStyles.borderRightWidth, 10)) + 'px';
+  var userAgentOffsetOverrides = {
+    'iOS': {
+      'paddingLeft': '3px',
+      'paddingRight': '3px'
+    }
+  };
+
+  var textareaWidth = 
+    (
+      parseInt(_this.elements.textarea.offsetWidth, 10) 
+      - parseInt(textareaStyles.paddingLeft, 10) 
+      - parseInt(textareaStyles.paddingRight, 10) 
+      - parseInt(textareaStyles.borderLeftWidth, 10) 
+      - parseInt(textareaStyles.borderRightWidth, 10) 
+      - ((userAgentOffsetOverrides[userAgent] && userAgentOffsetOverrides[userAgent].paddingLeft)?parseInt(userAgentOffsetOverrides[userAgent].paddingLeft, 10):0) 
+      - ((userAgentOffsetOverrides[userAgent] && userAgentOffsetOverrides[userAgent].paddingRight)?parseInt(userAgentOffsetOverrides[userAgent].paddingRight, 10):0) 
+    ) + 'px';
   var forceStylesBoth = {
     'overflowY': 'hidden',
     'overflowX': 'hidden',
@@ -78,6 +96,17 @@ Autogrow.prototype.createMirror = function(){
     'top': '-9999px'
   };
   var copyStyles = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'fontVariant', 'fontStretch', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'wordBreak', 'letterSpacing', 'textIndent', 'whiteSpace', 'wordWrap', 'paddingRight', 'paddingLeft', 'borderRightWidth', 'borderRightStyle', 'borderLeftWidth', 'borderLeftStyle'];
+  
+  if(_this.options.debug){
+    forceStylesMirror.top = _this.elements.textarea.offsetHeight;
+    forceStylesMirror.left = _this.elements.textarea.offsetWidth;
+    forceStylesMirror.zIndex = 2;
+    forceStylesMirror.color = 'blue';
+    forceStylesMirror.opacity = 0.7;
+    forceStylesMirror.visibility = 'visible';
+    forceStylesMirror.left = '0px';
+    forceStylesMirror.top = '323px';
+  }
   
   _this.destroyMirror();
   
@@ -96,6 +125,10 @@ Autogrow.prototype.createMirror = function(){
      _this.elements.mirror.style[item] = textareaStyles[item];
      _this.elements.textarea.style[item] = textareaStyles[item];
   });
+  
+  for(property in userAgentOffsetOverrides[userAgent]){
+    _this.elements.mirror.style[property] = (parseInt(_this.elements.mirror.style[property], 10) + parseInt(userAgentOffsetOverrides[userAgent][property], 10)) + (userAgentOffsetOverrides[userAgent][property].indexOf('px')?'px':'');
+  }
 
   _this.elements.textarea.rows = _this.options.minRows;
   
@@ -107,6 +140,15 @@ Autogrow.prototype.createMirror = function(){
   
   return true;
 };
+
+Autogrow.prototype.getUserAgent = function(){
+  var _this = this;
+  
+  if(navigator.userAgent.match(/iPad|iPhone|iPod/g)) return 'iOS';
+  
+  //default
+  return false;
+}
 
 Autogrow.prototype.destroyMirror = function(){
   var _this = this;
