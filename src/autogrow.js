@@ -258,7 +258,7 @@ Autogrow.prototype.throwEvent = function(eventName, element){
 
 //call constructor
 (function(){
-  var textareas = document.getElementsByTagName('textarea');
+  var textareas = document.querySelectorAll('textarea[data-autogrow="true"]');
 
   for(var ii = 0; ii < textareas.length; ii++){
     var textarea = textareas[ii];
