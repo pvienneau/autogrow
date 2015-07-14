@@ -52,7 +52,7 @@ Autogrow.prototype.update = function(hardUpdate){
     _this.registerEventListeners();
   }
   
-  _this.updateTextareaRowCount();
+  _this.keyPressHandler();
   
   return true;
 };
