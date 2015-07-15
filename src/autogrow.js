@@ -66,6 +66,9 @@ Autogrow.prototype.createMirror = function(){
     'iOS': {
       'paddingLeft': '3px',
       'paddingRight': '3px'
+    },
+    'IE': {
+      'paddingRight': '2px'
     }
   };
 
@@ -132,7 +135,9 @@ Autogrow.prototype.createMirror = function(){
 Autogrow.prototype.getUserAgent = function(){
   var _this = this;
   
-  if(navigator.userAgent.match(/iPad|iPhone|iPod/g)) return 'iOS';
+  if(/iPad|iPhone|iPod/.test(navigator.userAgent)) return 'iOS';
+  
+  if(/Edge\/|Trident\/|MSIE /.test(navigator.userAgent)) return 'IE';
   
   //default
   return false;
