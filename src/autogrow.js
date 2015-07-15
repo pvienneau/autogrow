@@ -36,6 +36,12 @@ Autogrow = function(element, options){
   }
   _this.options = extend(defaultOptions, cleanOptions(options));
   
+  //retain textarea default attributes
+  _this.options.defaultAttributes = {
+    'rows': _this.elements.textarea.getAttribute('rows'),
+    'style': _this.elements.textarea.getAttribute('style')
+  };
+  
   _this.update(true);
   
   return _this;
@@ -291,6 +297,20 @@ Autogrow.prototype.throwEvent = function(eventName, element){
   var newEvent = document.createEvent('customEvent');
   newEvent.initCustomEvent(eventName, true, false, {});
   element.dispatchEvent(newEvent);
+};
+
+Autogrow.prototype.destroy = function(){
+  var _this = this;
+  
+  _this.destroyMirror();
+  _this.elements.textarea.removeAttribute('style');
+  _this.elements.textarea.removeAttribute('rows');
+  
+  for(attribute in _this.options.defaultAttributes){
+    if(!_this.options.defaultAttributes[attribute]) continue;
+    
+    _this.elements.textarea.setAttribute(attribute, _this.options.defaultAttributes[attribute]);
+  }
 };
 
 //call constructor
