@@ -7,8 +7,7 @@ Autogrow = function(element, options){
   var defaultOptions = {
     'minRows': 1,
     'maxRows': false,
-    'scrollOnOverflow': true,
-    'debug': false
+    'scrollOnOverflow': true
   };
   
   //private methods
@@ -96,17 +95,6 @@ Autogrow.prototype.createMirror = function(){
     'top': '-9999px'
   };
   var copyStyles = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'fontVariant', 'fontStretch', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'wordBreak', 'letterSpacing', 'textIndent', 'whiteSpace', 'wordWrap', 'paddingRight', 'paddingLeft', 'borderRightWidth', 'borderRightStyle', 'borderLeftWidth', 'borderLeftStyle'];
-  
-  if(_this.options.debug){
-    forceStylesMirror.top = _this.elements.textarea.offsetHeight;
-    forceStylesMirror.left = _this.elements.textarea.offsetWidth;
-    forceStylesMirror.zIndex = 2;
-    forceStylesMirror.color = 'blue';
-    forceStylesMirror.opacity = 0.7;
-    forceStylesMirror.visibility = 'visible';
-    forceStylesMirror.left = '0px';
-    forceStylesMirror.top = '323px';
-  }
   
   _this.destroyMirror();
   
@@ -295,7 +283,9 @@ Autogrow.prototype.throwEvent = function(eventName, element){
   var _this = this;
   if(typeof eventName === 'undefined' || typeof element === 'undefined') return false;
 
-  element.dispatchEvent(new Event(eventName));
+  var newEvent = document.createEvent('customEvent');
+  newEvent.initCustomEvent(eventName, true, false, {});
+  element.dispatchEvent(newEvent);
 };
 
 //call constructor
