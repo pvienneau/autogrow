@@ -105,6 +105,13 @@ Autogrow.prototype.createMirror = function(){
   };
   var copyStyles = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'fontVariant', 'fontStretch', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'wordBreak', 'letterSpacing', 'textIndent', 'whiteSpace', 'wordWrap', 'paddingRight', 'paddingLeft', 'borderRightWidth', 'borderRightStyle', 'borderLeftWidth', 'borderLeftStyle'];
   
+	/* check line-height of textarea to make sure it's an absolute measurement */
+	if(isNaN(textareaStyles.lineHeight)){
+		_this.elements.textarea.style.lineHeight = (parseInt(textareaStyles.fontSize, 10)*1.2) + 'px';
+
+		textareaStyles = window.getComputedStyle(_this.elements.textarea, null)
+	}
+
   _this.destroyMirror();
   
   _this.elements.mirror = document.createElement("div");
