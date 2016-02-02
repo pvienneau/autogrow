@@ -1,7 +1,7 @@
 # autogrow
 Autogrow your textarea based on its content
 
-###Compatibility
+###Compatibility (v1.2.4)
 
 | Chrome | Firefox | Safari | IE11 | IE10 | IE9 | Chrome (iOS) | Safari (iOS) | Chrome (Android) | Firefox (Android) |
 | ------ | ------- | ------ | ---- | ---- | --- | ------------ | ------------ | ---------------- | ----------------- |
