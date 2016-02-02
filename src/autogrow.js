@@ -23,8 +23,10 @@ var Autogrow = (function(){
 		var defaultOptions = {
 			'minRows': 1,
 			'maxRows': false,
-			'debug': true,
-			'callbacks': {}
+			'allowLineBreak': false,
+			'scrollOnOverflow': true,
+			'callbacks': {},
+			'debug': true
 		};
 		
 		//instantiated options
@@ -111,6 +113,12 @@ var Autogrow = (function(){
 			return _keyPressHandler.call(_this, e);
 		});
 		
+		if(!_this.options.allowLineBreak){
+			_this.elements.textarea.addEventListener('keydown', function(e){
+				return _lineBreakHandler.call(_this, e);
+			});
+		}
+		
 		return true;
 	}
 	
@@ -124,6 +132,10 @@ var Autogrow = (function(){
 		
 		_this.elements.textarea.removeEventListener('input', function(e){
 			return _keyPressHandler.call(_this, e);
+		});
+		
+		_this.elements.textarea.removeEventListener('keydown', function(e){
+			return _lineBreakHandler.call(_this, e);
 		});
 		
 		return true;
@@ -140,6 +152,12 @@ var Autogrow = (function(){
 		var _this = this;
 		
 		return false;
+	}
+	
+	var _lineBreakHandler = function(e){
+		var _this = this;
+		
+		if(!e.shiftKey && e.which == 13) e.preventDefault();
 	}
 
 	//createMirror: Build mirror element, which is used to calculate the number of rows for the textarea
