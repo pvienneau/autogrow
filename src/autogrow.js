@@ -13,10 +13,13 @@ var Autogrow = (function(){
 		//options default value
 		options = options || {};
 		
+		//elements listing
 		_this.elements = {
-			'textarea': element
+			'textarea': element,
+			'mirror': null
 		};
 		
+		//default options
 		var defaultOptions = {
 			'minRows': 1,
 			'maxRows': false,
@@ -24,23 +27,28 @@ var Autogrow = (function(){
 			'callbacks': {}
 		};
 		
-		_this.options = extend(defaultOptions, options);
-		
-		_this.attributes = {
-			'rows': ''
-		};
-		for(var i = 0; i < _this.elements.textarea.attributes.length; i++){
-			_this.attributes[_this.elements.textarea.attributes[i].name] = _this.elements.textarea.attributes[i].value;
-		}
+		//instantiated options
+		_this.options = _extend(defaultOptions, options);
 		
 		//clean options
 		_this.options.minRows = Math.max(1, _this.options.minRows);
 		if(_this.options.maxRows < 0) _this.options.maxRows = false;
 		
+		//original attributes stored for possible element state reset in destroy
+		_this.attributes = {
+			'rows': ''
+		};
+		
+		for(var i = 0; i < _this.elements.textarea.attributes.length; i++){
+			_this.attributes[_this.elements.textarea.attributes[i].name] = _this.elements.textarea.attributes[i].value;
+		}
+		
+		//build Autogrow
 		_this.reInit();
 		
 		_callback.call(_this, 'create');
 		
+		//store on element
 		if(!_this.elements.textarea.data) _this.elements.textarea.data = {};
 		_this.elements.textarea.data.autogrow = _this;
 		
@@ -48,12 +56,18 @@ var Autogrow = (function(){
 	}
 	/*constructor*/
 	
-	/*private methods*/	
+	/*private methods*/
+	
+	//isTagName: Check wether the element is of the specified tag name
+	//element: [Element Object] Element to check tag name
+	//tagName: [String] Tag name to compare element's tag name value against
 	var _isTagName = function(element, tagName){
 		return (element && element.tagName.toLowerCase() == tagName.toLowerCase());
 	}
 	
-	var extend = function(){
+	//extend: Merge objects, by order they are defined in parameter
+	//object: [Object] * Object(s) to merge
+	var _extend = function(){
 		for(var i=1; i<arguments.length; i++){
 			for(var key in arguments[i]){
 				if(arguments[i].hasOwnProperty(key))  arguments[0][key] = arguments[i][key];
@@ -63,6 +77,8 @@ var Autogrow = (function(){
 		return arguments[0];
 	}
 	
+	//callback: Execute a defined callback event within the widget; subsequently throws event in DOM, unless the widget callback returns false
+	//eventName: [String] name of event to throw
 	var _callback = function(eventName){
 		var _this = this;
 		
@@ -82,26 +98,28 @@ var Autogrow = (function(){
 		return _result;
 	}
 	
+	//registerEventListeners: Register events handlers within widget 
 	var _registerEventListeners = function(){
 		var _this = this;
 		
 		_unregisterEventListeners.call(_this);
 		
 		_this.elements.textarea.addEventListener('keydown', function(e){
-			return _keyDownHandler.call(_this);
+			return _keyDownHandler.call(_this, e);
 		});
 		_this.elements.textarea.addEventListener('input', function(e){
-			return _keyPressHandler.call(_this);
+			return _keyPressHandler.call(_this, e);
 		});
 		
 		return true;
 	}
 	
+	//unregisterEventListeners: Unregister events handlers within widget 
 	var _unregisterEventListeners = function(){
 		var _this = this;
 		
 		_this.elements.textarea.removeEventListener('keydown', function(e){
-			return _keyDownHandler.call(_this);
+			return _keyDownHandler.call(_this, e);
 		});
 		
 		_this.elements.textarea.removeEventListener('input', function(e){
@@ -110,6 +128,7 @@ var Autogrow = (function(){
 		
 		return true;
 	}
+	
 	
 	var _keyPressHandler = function(){
 		var _this = this;
@@ -120,9 +139,10 @@ var Autogrow = (function(){
 	var _keyDownHandler = function(e){
 		var _this = this;
 		
-		
+		return false;
 	}
 
+	//createMirror: Build mirror element, which is used to calculate the number of rows for the textarea
 	var _createMirror = function(){
 		var _this = this;
 		
@@ -136,6 +156,7 @@ var Autogrow = (function(){
 		return true;
 	}
 	
+	//destroyMirror: Destroy mirror element
 	var _destroyMirror = function(){
 		var _this = this;
 		
@@ -147,6 +168,7 @@ var Autogrow = (function(){
 		return true;
 	}
 	
+	//refreshStyles: Build inline styles for both textarea and mirror elements
 	var _refreshStyles = function(){
 		var _this = this;
 		
@@ -238,6 +260,9 @@ var Autogrow = (function(){
 		return true;
 	}
 	
+	//calculateOffset: Calculate offset from element to body boundaries, for the provided direction
+	//element: [Element Object] Element to calculate offset from, relative to body
+	//direction: [String] Direction of offset to calculate. Accepted values are [Top, Right, Bottom, Left] 
 	var _calculateOffset = function(element, direction){
 		direction = direction || 'top';
 		var offset = 0;
@@ -253,6 +278,7 @@ var Autogrow = (function(){
 		return offset;
 	}
 	
+	//setDebugStyles: Set special styles on mirror when in debug mode for a better debugging experience
 	var _setDebugStyles = function(){
 		var _this = this;
 		
@@ -272,6 +298,7 @@ var Autogrow = (function(){
 		}
 	}
 	
+	//getUserAgent: Returns browser's user agent, if applicable
 	var _getUserAgent = function(){
 		if(/iPad|iPhone|iPod/.test(navigator.userAgent)) return 'ios';
 		if(/Edge\/|Trident\/|MSIE /.test(navigator.userAgent)) return 'ie';
@@ -280,6 +307,8 @@ var Autogrow = (function(){
 		return false;
 	}
 	
+	//copyTextToMirror: Write text to mirror's innerHTML, from textarea's value, optionally concatenated with an extra string
+	//extraString: [String]
 	var _copyTextToMirror = function(extraString){
 		var _this = this;
 		var textareaValue = _this.elements.textarea.value;
@@ -290,6 +319,7 @@ var Autogrow = (function(){
 		_this.elements.mirror.innerHTML = (textareaValue+extraString);
 	}
 	
+	//getMirrorRowCount: Get number of rows currently found in mirror element's innerHTML
 	var _getMirrorRowCount = function(){
 		var _this = this;
 		
@@ -303,6 +333,7 @@ var Autogrow = (function(){
 	}
 	/*private methods*/
 	
+	//reInit: Deploy widget
 	Autogrow.prototype.reInit = function(){
 		var _this = this;
 		
@@ -320,6 +351,7 @@ var Autogrow = (function(){
 		return true;
 	}
 
+	//Destroy: Destroy widget
 	Autogrow.prototype.destroy = function(){
 	  	var _this = this;
 	  	
@@ -338,6 +370,7 @@ var Autogrow = (function(){
 		return true;
 	};
 	
+	//Refresh: Update widget's stylings
 	Autogrow.prototype.refresh = function(){
 		var _this = this;
 		
@@ -348,6 +381,9 @@ var Autogrow = (function(){
 		return true;
 	}
 	
+	
+	//Update: Update widget's state and sizings
+	//silent: [Boolean] If set to false, do not throw callback on row change
 	Autogrow.prototype.update = function(silent){
 		var _this = this,
 			oldRowCount = _this.getRowCount(),
@@ -366,12 +402,14 @@ var Autogrow = (function(){
 		return true;
 	}
 	
+	//getRowCount: Get current row value of textarea element
 	Autogrow.prototype.getRowCount = function(){
 		var _this = this;
 
 		return _this.elements.textarea.rows;
 	}
 	
+	//setRowCount: Set textarea element's row attribute value
 	Autogrow.prototype.setRowCount = function(rowCount){
 		var _this = this,
 		rowCount = rowCount || _this.elements.textarea.rows;
@@ -385,13 +423,7 @@ var Autogrow = (function(){
 })();
 
 
-
-
-
-
-
-
-//call constructor
+/*Auto-call*/
 (function(){
   	var textareas = document.querySelectorAll('textarea[data-autogrow="true"]');
 	
@@ -400,3 +432,4 @@ var Autogrow = (function(){
     	new Autogrow(textarea);
   	}
 }());
+/*Auto-call*/
