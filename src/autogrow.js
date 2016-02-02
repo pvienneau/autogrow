@@ -31,7 +31,7 @@ var Autogrow = (function(){
 			'allowLineBreak': false,
 			'scrollOnOverflow': false,
 			'callbacks': {},
-			'debug': true
+			'debug': false
 		};
 		
 		//instantiated options
