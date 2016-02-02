@@ -523,18 +523,18 @@ var Autogrow = (function(){
 		var _prevHeight = parseInt(_cloneStyles.height, 10);
 		var _str = '';
 		
-		for(var i = 0; i < _value.length; i++){
-			_clone.innerHTML = _str+_value[i];
+		for(var jj = 0; jj < _value.length; jj++){
+			_clone.innerHTML = _str+_value[jj];
 			
 			_cloneStyles = window.getComputedStyle(_clone, null);
 			
 			if(parseInt(_cloneStyles.height, 10) > _prevHeight){
-				i = _value.substr(0, i).lastIndexOf(' ')+1;
+				jj = _value.substr(0, jj).lastIndexOf(' ')+1;
 				
 				_str = '';
 			}
 			
-			_str += _value[i];
+			_str += _value[jj];
 		}
 		
 		_clone.parentNode.removeChild(_clone);
