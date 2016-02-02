@@ -419,6 +419,64 @@ var Autogrow = (function(){
 		return true;
 	}
 	
+	//getLastLine: Get the last line of the textarea element's innerHTML
+	Autogrow.prototype.getLastLine = function(){
+		var _this = this,
+			_value = _this.elements.textarea.value,
+			_clone = _this.elements.mirror.cloneNode(true);
+
+		
+		_clone.innerHTML = 'W';
+		
+		document.body.appendChild(_clone);
+		
+		var _cloneStyles = window.getComputedStyle(_clone, null);
+		
+		var _prevHeight = parseInt(_cloneStyles.height, 10);
+		var _str = '';
+		
+		for(var i = 0; i < _value.length; i++){
+			_clone.innerHTML = _str+_value[i];
+			
+			_cloneStyles = window.getComputedStyle(_clone, null);
+			
+			if(parseInt(_cloneStyles.height, 10) > _prevHeight){
+				i = _value.substr(0, i).lastIndexOf(' ')+1;
+				
+				_str = '';
+			}
+			
+			_str += _value[i];
+		}
+		
+		_clone.parentNode.removeChild(_clone);
+		delete _clone;
+		
+		return _str.replace(/^(\s)*/g, '');
+	}
+	
+	//getLastLineWidth: Get width of last line of text form textarea
+	Autogrow.prototype.getLastLineWidth = function(){
+		var _this = this,
+			_value = _this.elements.textarea.value,
+			_clone = _this.elements.mirror.cloneNode(true);
+			
+		document.body.appendChild(_clone);
+		
+		_clone.innerHTML = _this.getLastLine();
+		
+		_clone.style.width = 'auto';
+		
+		var _cloneComputedStyle = window.getComputedStyle(_clone, null);
+		var _cloneWidth = parseInt(_cloneComputedStyle.width);
+		var _clonePaddingLeft = parseInt(_cloneComputedStyle.paddingLeft);
+		
+		_clone.parentNode.removeChild(_clone);
+		delete _cloneWidth;
+
+		return parseInt(_cloneWidth + _clonePaddingLeft, 10);
+	}
+	
 	return Autogrow;
 })();
 
