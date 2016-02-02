@@ -26,6 +26,13 @@ var Autogrow = (function(){
 		
 		_this.options = extend(defaultOptions, options);
 		
+		_this.attributes = {
+			'rows': ''
+		};
+		for(var i = 0; i < _this.elements.textarea.attributes.length; i++){
+			_this.attributes[_this.elements.textarea.attributes[i].name] = _this.elements.textarea.attributes[i].value;
+		}
+		
 		//clean options
 		_this.options.minRows = Math.max(1, _this.options.minRows);
 		if(_this.options.maxRows < 0) _this.options.maxRows = false;
@@ -33,6 +40,9 @@ var Autogrow = (function(){
 		_this.reInit();
 		
 		_callback.call(_this, 'create');
+		
+		if(!_this.elements.textarea.data) _this.elements.textarea.data = {};
+		_this.elements.textarea.data.autogrow = _this;
 		
 		return _this;		
 	}
@@ -110,7 +120,7 @@ var Autogrow = (function(){
 	var _keyDownHandler = function(e){
 		var _this = this;
 		
-		console.log(e);
+		
 	}
 
 	var _createMirror = function(){
@@ -175,6 +185,9 @@ var Autogrow = (function(){
 			'height': 'auto',
 			'textRendering': 'optimizeSpeed'
 		};
+		var forceStylesTextarea = {
+			'resize': 'none'
+		}
 		var forceStylesMirror = {
 			'visibility': 'hidden',
 			'position': 'absolute',
@@ -195,6 +208,11 @@ var Autogrow = (function(){
 		for(property in forceStylesBoth){
 		 	_this.elements.textarea.style[property] = forceStylesBoth[property];
 	    	_this.elements.mirror.style[property] = forceStylesBoth[property];
+	  	}
+
+		//force default styles to textarea
+	  	for(property in forceStylesTextarea){
+	    	_this.elements.textarea.style[property] = forceStylesTextarea[property];
 	  	}
 
 		//force default styles to mirror
@@ -306,11 +324,17 @@ var Autogrow = (function(){
 	  	var _this = this;
 	  	
 		_unregisterEventListeners.call(_this);
-	
+		
 		delete _this.data;
-	
+		
 		_destroyMirror.call(_this);
-
+		
+		_this.elements.textarea.removeAttribute('style');
+		
+		for(attribute in _this.attributes){
+			_this.elements.textarea[attribute] = _this.attributes[attribute];
+		}
+		
 		return true;
 	};
 	
