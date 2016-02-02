@@ -24,7 +24,7 @@ var Autogrow = (function(){
 			'minRows': 1,
 			'maxRows': false,
 			'allowLineBreak': false,
-			'scrollOnOverflow': true,
+			'scrollOnOverflow': false,
 			'callbacks': {},
 			'debug': true
 		};
@@ -150,8 +150,32 @@ var Autogrow = (function(){
 	
 	var _keyDownHandler = function(e){
 		var _this = this;
+
+		  /*
+		    To verify that we can perform the calculation to block the user from surpassing the allocated rows on a textarea, we must validate the following conditions:
+		    1. The option 'scrollOnOverflow' is indeed set to false, disallowing a scroll to happen on overflow;
+		    2. The textarea has reached its maximum number of rows, and that this maximum value is indeed defined;
+		    3. The key is not one of the following (Meta, Control, Shift, Alt), which would otherwise not append a value to the textarea
+		    4. The key value is indeed a character, as opposed to keys such as the arrows, backspace, etc.
+
+		    Exceptions include:
+		    a. Force check if 'Enter' is pressed (new line keys)
+		    b. Abort if 'Backspace' or 'Delete' is pressed (content deletion keys)
+		  */		
 		
-		return false;
+		if(((!_this.options.scrollOnOverflow && (_this.elements.textarea.rows == _this.options.maxRows) && ((!(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) && /^U\+\d{3}\w$/.test(e.keyIdentifier)))) || e.which == 13) && (e.which != 8 && e.which != 46)){
+		
+			_copyTextareaToMirror.call(_this, 'W'); // push generically widest letter as we can't garantee to convert the keycode to the correct character without doing some mad calculations (see http://stackoverflow.com/a/13127566/751564)
+			if(
+				!_this.options.scrollOnOverflow &&
+				(_this.getRowCount() > _this.elements.textarea.rows ||
+				(_this.getRowCount() >= _this.options.maxRows && e.which == 13))
+			){
+				e.preventDefault();
+			}
+		}
+		
+	return false;
 	}
 	
 	var _lineBreakHandler = function(e){
@@ -325,16 +349,28 @@ var Autogrow = (function(){
 		return false;
 	}
 	
-	//copyTextToMirror: Write text to mirror's innerHTML, from textarea's value, optionally concatenated with an extra string
-	//extraString: [String]
-	var _copyTextToMirror = function(extraString){
+	//copyTextareaToMirror: Write text to mirror's innerHTML, from textarea's value, optionally concatenated with an extra string
+	//extraString: [String]: String to concatenate at end of textarea element's value
+	var _copyTextareaToMirror = function(extraString){
 		var _this = this;
 		var textareaValue = _this.elements.textarea.value;
 		extraString = extraString || '';
 		
 		if(textareaValue.match(/\n$/)) textareaValue += '.';
 		
-		_this.elements.mirror.innerHTML = (textareaValue+extraString);
+		return _writeToMirror.call(_this, textareaValue+extraString);
+	}
+	
+	//_writeToMirror: Write string to mirror's innerHTML.
+	//str: [String] String to add to mirror element
+	var _writeToMirror = function(str){
+		var _this = this;
+		
+		str = str || '';
+		
+		_this.elements.mirror.innerHTML = str;
+		
+		return true;
 	}
 	
 	//getMirrorRowCount: Get number of rows currently found in mirror element's innerHTML
@@ -343,11 +379,34 @@ var Autogrow = (function(){
 		
 		var calculatedRows, 
 			calculatedHeight = parseInt(_this.elements.mirror.style.minHeight, 10);
-			
+		
 		calculatedHeight = Math.max(parseInt(_this.elements.mirror.clientHeight, 10), parseInt(calculatedHeight, 10));
 		calculatedRows = calculatedHeight/_this.data.rowHeight;
 		
 		return Math.round(calculatedRows);
+	}
+	
+	//trimTextarea: Trim textarea's innerHTML, limited to the number of rows specified
+	//maxAllowedRows: [Integer] Maximum allowed rows for trim to complete
+	var _trimTextarea = function(maxAllowedRows){
+		var _this = this;
+		
+		if(!maxAllowedRows) return false;
+		
+		_copyTextareaToMirror.call(_this);
+		
+		var value = _this.elements.textarea.value;
+		
+		var i = 9999; //failsafe
+		while(_getMirrorRowCount.call(_this) > maxAllowedRows && i--){
+			value = value.substring(0, value.length-1);
+			_writeToMirror.call(_this, value);
+		}
+		
+		_this.elements.textarea.value = value;
+		_copyTextareaToMirror.call(_this);
+		
+		return true;
 	}
 	/*private methods*/
 	
@@ -364,7 +423,7 @@ var Autogrow = (function(){
 		_registerEventListeners.call(_this);
 		
 		_this.refresh();
-		_this.update(true);
+		this.update(true);
 		
 		return true;
 	}
@@ -409,8 +468,19 @@ var Autogrow = (function(){
 			
 		silent = silent || false;
 		
-		_copyTextToMirror.call(_this);
+		if(_this.options.maxRows) _trimTextarea.call(_this, _this.options.maxRows);
+		
+		_copyTextareaToMirror.call(_this);
 		newRowCount = _getMirrorRowCount.call(_this);
+		
+		if(_this.options.maxRows && newRowCount >= _this.options.maxRows && _this.options.scrollOnOverflow){
+			_this.elements.textarea.style.overflowY = 'auto';
+		}else{
+			_this.elements.textarea.style.overflowY = 'hidden';
+		}
+		
+		if(_this.options.minRows) newRowCount = Math.max(_this.options.minRows, newRowCount);
+		if(_this.options.maxRows) newRowCount = Math.min(_this.options.maxRows, newRowCount);
 		
 		if(oldRowCount != newRowCount){
 			_this.setRowCount(newRowCount);
@@ -505,7 +575,9 @@ var Autogrow = (function(){
 	
   	for(var ii = 0; ii < textareas.length; ii++){
     	var textarea = textareas[ii];
-    	new Autogrow(textarea);
+    	new Autogrow(textarea, {
+	'maxRows': 5
+});
   	}
 }());
 /*Auto-call*/
