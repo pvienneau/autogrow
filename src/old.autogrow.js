@@ -1,0 +1,433 @@
+//constructor
+Autogrow = function(element, options){
+  var _this = this;
+  options = options || {};
+  
+  //private variablesun
+  var defaultOptions = {
+    'minRows': 1,
+    'maxRows': false,
+	'allowLineBreak': false,
+    'scrollOnOverflow': true,
+	'callbacks': {}
+  };
+  
+  //private methods
+  var extend = function(){
+    for(var i=1; i<arguments.length; i++){
+      for(var key in arguments[i]){
+        if(arguments[i].hasOwnProperty(key))  arguments[0][key] = arguments[i][key];
+      }
+    }
+        
+    return arguments[0];
+  }
+  
+  var cleanOptions = function(options){
+    if(!options) return {};
+    
+    if(typeof options.minRows !== 'undefined') options.minRows = Math.max(1, options.minRows);
+    
+    return options;
+  }
+  
+  if(typeof element === 'undefined' || element.tagName.toLowerCase() !== 'textarea') return console.warn('You must define a textarea to deploy the autogrow onto.')
+
+  element.className = element.className + ' ui-autogrow';
+
+  _this.elements = {
+    'textarea': element
+  }
+  _this.options = extend(defaultOptions, cleanOptions(options));
+  _this.eventHandlers = {};  
+
+  //retain textarea default attributes
+  _this.options.defaultAttributes = {
+    'rows': _this.elements.textarea.getAttribute('rows'),
+    'style': _this.elements.textarea.getAttribute('style')
+  };
+  
+  _this.update(true);
+
+  if(typeof _this.options.callbacks.onCreate === 'function') _this.options.callbacks.onCreate.call(_this);
+
+  if(!element.data){
+  	element.data = {};
+  }
+  element.data.autogrow = _this;
+
+  return _this;
+};
+
+Autogrow.prototype.update = function(hardUpdate){
+  var _this = this;
+  
+  if(typeof hardUpdate === 'undefined') hardUpdate = false;
+  
+  _this.createMirror();
+  
+  if(hardUpdate){
+    _this.registerEventListeners();
+  }
+  
+  _this.keyPressHandler();
+  
+  if(typeof _this.options.callbacks.onUpdate === 'function') _this.options.callbacks.onUpdate.call(_this);
+
+  return true;
+};
+
+Autogrow.prototype.createMirror = function(){
+  var _this = this;
+
+  _this.elements.textarea.removeAttribute('style');
+
+  var textareaStyles = window.getComputedStyle(_this.elements.textarea, null);
+  var userAgent = _this.getUserAgent();
+
+  var userAgentOffsetOverrides = {
+    'iOS': {
+      'paddingLeft': '3px',
+      'paddingRight': '3px'
+    },
+    'IE': {
+      'paddingRight': '2px'
+    }
+  };
+
+  var textareaWidth = 
+    (
+      parseInt(_this.elements.textarea.offsetWidth, 10) 
+      - parseInt(textareaStyles.paddingLeft, 10) 
+      - parseInt(textareaStyles.paddingRight, 10) 
+      - parseInt(textareaStyles.borderLeftWidth, 10) 
+      - parseInt(textareaStyles.borderRightWidth, 10) 
+      - ((userAgentOffsetOverrides[userAgent] && userAgentOffsetOverrides[userAgent].paddingLeft)?parseInt(userAgentOffsetOverrides[userAgent].paddingLeft, 10):0) 
+      - ((userAgentOffsetOverrides[userAgent] && userAgentOffsetOverrides[userAgent].paddingRight)?parseInt(userAgentOffsetOverrides[userAgent].paddingRight, 10):0) 
+    ) + 'px';
+  var forceStylesBoth = {
+    'overflowY': 'hidden',
+    'overflowX': 'hidden',
+    'height': 'auto',
+    'textRendering': 'optimizeSpeed'/*,
+    'display': textareaStyles['display']*/
+  };
+  var forceStylesMirror = {
+    'visibility': 'hidden',
+    'position': 'absolute',
+    'zIndex': -1,
+    'width': textareaWidth,
+    'left': '-9999px',
+    'top': '-9999px'
+  };
+  var copyStyles = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'fontVariant', 'fontStretch', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'wordBreak', 'letterSpacing', 'textIndent', 'whiteSpace', 'wordWrap', 'paddingRight', 'paddingLeft', 'borderRightWidth', 'borderRightStyle', 'borderLeftWidth', 'borderLeftStyle'];
+	
+	/* check line-height of textarea to make sure it's an absolute measurement */
+	if(textareaStyles.lineHeight.match(/^\d+px$/)){
+		_this.elements.textarea.style.lineHeight = textareaStyles.lineHeight;
+	}else{
+		_this.elements.textarea.style.lineHeight = (parseInt(textareaStyles.fontSize, 10)*1.2) + 'px';
+
+		textareaStyles = window.getComputedStyle(_this.elements.textarea, null)
+	}
+
+  _this.destroyMirror();
+  
+  _this.elements.mirror = document.createElement("div");
+  
+  for(property in forceStylesBoth){
+    _this.elements.textarea.style[property] = forceStylesBoth[property];
+    _this.elements.mirror.style[property] = forceStylesBoth[property];
+  }
+  
+  for(property in forceStylesMirror){
+    _this.elements.mirror.style[property] = forceStylesMirror[property];
+  }
+  
+  copyStyles.forEach(function(item){	
+     _this.elements.mirror.style[item] = textareaStyles[item];
+     _this.elements.textarea.style[item] = textareaStyles[item];
+  });
+  
+  for(property in userAgentOffsetOverrides[userAgent]){
+    _this.elements.mirror.style[property] = (parseInt(_this.elements.mirror.style[property], 10) + parseInt(userAgentOffsetOverrides[userAgent][property], 10)) + (userAgentOffsetOverrides[userAgent][property].indexOf('px')?'px':'');
+  }
+
+  _this.elements.textarea.rows = _this.options.minRows;
+  
+  _this.options.rowHeight = parseInt(_this.elements.mirror.style.lineHeight, 10);
+  
+  _this.elements.mirror.style.minHeight = (_this.options.minHeight || parseInt(textareaStyles.minHeight, 10)/* || parseInt(textareaStyles.height, 10)*/ || parseInt(_this.elements.mirror.style.lineHeight, 10))+'px';
+
+  document.body.appendChild(_this.elements.mirror);
+  
+  return true;
+};
+
+Autogrow.prototype.getUserAgent = function(){
+  var _this = this;
+  
+  if(/iPad|iPhone|iPod/.test(navigator.userAgent)) return 'iOS';
+  
+  if(/Edge\/|Trident\/|MSIE /.test(navigator.userAgent)) return 'IE';
+  
+  //default
+  return false;
+}
+
+Autogrow.prototype.destroyMirror = function(){
+  var _this = this;
+
+  if(!_this.elements.mirror) return false;
+  
+  _this.elements.mirror.parentNode.removeChild(_this.elements.mirror);
+  delete _this.elements.mirror;
+
+  return true;
+};
+
+Autogrow.prototype.registerEventListeners = function(){
+  var _this = this;
+
+  _this.unregisterEventListeners();
+
+  _this.eventHandlers.keydown = _this.keyDownHandler.bind(_this);
+  _this.eventHandlers.input = _this.keyPressHandler.bind(_this);
+
+  _this.elements.textarea.addEventListener('keydown', _this.eventHandlers.keydown);
+  _this.elements.textarea.addEventListener('input', _this.eventHandlers.input);
+  
+  if(!_this.options.allowLineBreak){
+	_this.eventHandlers.lineBreakHandler = _this.lineBreakHandler.bind(_this);
+	_this.elements.textarea.addEventListener('keydown', _this.eventHandlers.lineBreakHandler);
+  }
+
+  return true;
+};
+
+Autogrow.prototype.unregisterEventListeners = function(event){
+  var _this = this;
+	
+  _this.elements.textarea.removeEventListener('keydown', _this.eventHandlers.keydown);
+  _this.eventHandlers.keydown = null;
+
+  _this.elements.textarea.removeEventListener('input', _this.eventHandlers.input);
+	_this.eventHandlers.input = null;
+  
+  return true;
+};
+
+Autogrow.prototype.lineBreakHandler = function(event){
+	if(!event.shiftKey && event.which == 13) event.preventDefault();
+}
+
+Autogrow.prototype.keyDownHandler = function(event){
+  var _this = this;
+	
+  /*
+    To verify that we can perform the calculation to block the user from surpassing the allocated rows on a textarea, we must validate the following conditions:
+    1. The option 'scrollOnOverflow' is indeed set to false, disallowing a scroll to happen on overflow;
+    2. The textarea has reached its maximum number of rows, and that this maximum value is indeed defined;
+    3. The key is not one of the following (Meta, Control, Shift, Alt), which would otherwise not append a value to the textarea
+    4. The key value is indeed a character, as opposed to keys such as the arrows, backspace, etc.
+    
+    Exceptions include:
+    a. Force check if 'Enter' is pressed (new line keys)
+    b. Abort if 'Backspace' or 'Delete' is pressed (content deletion keys)
+  */
+  if(((!_this.options.scrollOnOverflow && (_this.elements.textarea.rows == _this.options.maxRows) && ((!(event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) && /^U\+\d{3}\w$/.test(event.keyIdentifier)))) || event.which == 13) && (event.which != 8 && event.which != 46)){
+
+    _this.copyTextToMirror('W'); // push generically widest letter as we can't garantee to convert the keycode to the correct character without doing some mad calculations (see http://stackoverflow.com/a/13127566/751564)
+    if(
+	  !_this.options.scrollOnOverflow &&
+      (_this.getTextareaCalculatedRows(false) > _this.elements.textarea.rows ||
+      (_this.getTextareaCalculatedRows(false) >= _this.options.maxRows && event.which == 13))
+    ){
+		event.preventDefault();
+	}
+  }
+}
+
+Autogrow.prototype.keyPressHandler = function(event){
+   var _this = this;
+
+   _this.updateTextareaRowCount();
+};
+
+Autogrow.prototype.updateTextareaRowCount = function(extraCharacter){
+  var _this = this;
+  var oldRowValue = _this.elements.textarea.rows;
+
+  _this.copyTextToMirror(extraCharacter);
+
+  var calculatedRows = _this.getTextareaCalculatedRows();
+
+  if(_this.options.maxRows && calculatedRows >= _this.options.maxRows && _this.options.scrollOnOverflow){
+    _this.elements.textarea.style.overflowY = 'auto';
+  }else{
+    _this.elements.textarea.style.overflowY = 'hidden';
+  }
+
+  if(oldRowValue != calculatedRows){
+    _this.elements.textarea.rows = calculatedRows;
+    _this.throwEvent('rowChange', _this.elements.textarea);
+  }
+
+  return true;
+};
+
+Autogrow.prototype.copyTextToMirror = function(extraCharacter){
+  var _this = this;
+  var textareaValue = _this.elements.textarea.value;
+  extraCharacter = extraCharacter || '';
+  
+  if(textareaValue.match(/\n$/)) textareaValue += '.';
+  
+  _this.writeToMirror(textareaValue+extraCharacter);
+
+  return true;
+};
+
+Autogrow.prototype.writeToMirror = function(str){
+  var _this = this;
+  str = str || '';
+  
+  _this.elements.mirror.innerHTML = str;
+  
+  return str;
+}
+
+Autogrow.prototype.getTextareaCalculatedRows = function(enforceBoundaries){
+  var _this = this;
+  if(typeof enforceBoundaries === 'undefined') enforceBoundaries = true;
+  
+  var calculatedRows, calculatedHeight = parseInt(_this.elements.mirror.style.minHeight, 10), calculatedRows;
+  calculatedHeight = Math.max(parseInt(_this.elements.mirror.clientHeight, 10), parseInt(calculatedHeight, 10));
+  calculatedRows = calculatedHeight/_this.options.rowHeight;
+
+  if(enforceBoundaries){
+    calculatedRows = Math.max(_this.options.minRows, calculatedRows);
+    if(_this.options.maxRows){
+      if(calculatedRows > _this.options.maxRows && !_this.options.scrollOnOverflow) _this.trimTextareaValue(_this.options.maxRows);
+      
+      calculatedRows = Math.min(_this.options.maxRows, calculatedRows);
+    }
+  }
+
+  return Math.round(calculatedRows);
+}
+
+Autogrow.prototype.trimTextareaValue = function(maximumRows){
+  var _this = this;
+  maximumRows = maximumRows || _this.options.maxRows || _this.options.minRows || false;
+
+  if(!maximumRows) return false;
+  
+  var value = _this.elements.textarea.value;
+  var i = 9999; //failsafe
+  while(_this.getTextareaCalculatedRows(false) > maximumRows && i--){	
+	value = value.substring(0, value.length-1);
+    _this.writeToMirror(value);
+  }
+  
+  _this.elements.textarea.value = value;
+}
+
+Autogrow.prototype.throwEvent = function(eventName, element){
+  var _this = this;
+  if(typeof eventName === 'undefined' || typeof element === 'undefined') return false;
+
+  var newEvent = document.createEvent('customEvent');
+  newEvent.initEvent(eventName, true, false, {});
+  
+  //var newEvent = new Event(eventName)
+
+  element.dispatchEvent(newEvent);
+};
+
+Autogrow.prototype.getLastLine = function(){
+	var _this = this,
+		_value = _this.elements.textarea.value,
+		_clone = _this.elements.mirror.cloneNode(true);
+		
+	_clone.innerHTML = 'W';
+	
+	document.body.appendChild(_clone);
+	
+	var _cloneStyles = window.getComputedStyle(_clone, null);
+	
+	var _prevHeight = parseInt(_cloneStyles.height, 10);
+	var _str = '';
+	
+	for(var i = 0; i < _value.length; i++){
+		_clone.innerHTML = _str+_value[i];
+		
+		_cloneStyles = window.getComputedStyle(_clone, null);
+
+		if(parseInt(_cloneStyles.height, 10) > _prevHeight){
+			i = _value.substr(0, i).lastIndexOf(' ')+1;
+			
+			_str = '';
+		}
+		
+		_str += _value[i];
+	}
+	
+	_clone.parentNode.removeChild(_clone);
+	delete _clone;
+	
+	return _str.replace(/^(\s)*/g, '');
+}
+
+Autogrow.prototype.getLastLineWidth = function(){
+	var _this = this,
+		_value = _this.elements.textarea.value,
+		_clone = _this.elements.mirror.cloneNode(true);
+		
+	document.body.appendChild(_clone);
+	
+	_clone.innerHTML = _this.getLastLine();
+	
+	_clone.style.width = 'auto';
+	
+	var _cloneComputedStyle = window.getComputedStyle(_clone, null);
+	var _cloneWidth = parseInt(_cloneComputedStyle.width);
+	var _clonePaddingLeft = parseInt(_cloneComputedStyle.paddingLeft);
+	
+	_clone.parentNode.removeChild(_clone);
+	delete _cloneWidth;
+	
+	return parseInt(_cloneWidth + _clonePaddingLeft, 10);
+}
+
+Autogrow.prototype.refresh = function(){
+	var _this = this;
+	
+	_this.updateTextareaRowCount();
+}
+
+Autogrow.prototype.destroy = function(){
+  var _this = this;
+  
+  _this.unregisterEventListeners()
+
+  _this.destroyMirror();
+  _this.elements.textarea.removeAttribute('style');
+  _this.elements.textarea.removeAttribute('rows');
+  
+  for(attribute in _this.options.defaultAttributes){
+    if(!_this.options.defaultAttributes[attribute]) continue;
+    
+    _this.elements.textarea.setAttribute(attribute, _this.options.defaultAttributes[attribute]);
+  }
+};
+
+//call constructor
+(function(){
+  var textareas = document.querySelectorAll('textarea[data-autogrow="true"]');
+
+  for(var ii = 0; ii < textareas.length; ii++){
+    var textarea = textareas[ii];
+    new Autogrow(textarea);
+  }
+}());
