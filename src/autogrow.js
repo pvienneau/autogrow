@@ -1,3 +1,8 @@
+/*
+  Autogrow 2.0.1
+  license: MIT
+  https://github.com/pvienneau/autogrow
+*/
 var Autogrow = (function(){
 	/*constructor*/
 	function Autogrow(element, options){
@@ -175,13 +180,15 @@ var Autogrow = (function(){
 			}
 		}
 		
-	return false;
+		return false;
 	}
 	
 	var _lineBreakHandler = function(e){
 		var _this = this;
 		
 		if(!e.shiftKey && e.which == 13) e.preventDefault();
+	
+		return true;
 	}
 
 	//createMirror: Build mirror element, which is used to calculate the number of rows for the textarea
@@ -393,12 +400,15 @@ var Autogrow = (function(){
 		
 		if(!maxAllowedRows) return false;
 		
-		_copyTextareaToMirror.call(_this);
-		
 		var value = _this.elements.textarea.value;
 		
-		var i = 9999; //failsafe
-		while(_getMirrorRowCount.call(_this) > maxAllowedRows && i--){
+		//remove multiple spaces at end of textarea value
+		value = value.replace(/\s\s+$/g, ' ');
+		_this.elements.textarea.value = value;
+		_copyTextareaToMirror.call(_this);
+		
+		var kk = value.length;
+		while(_getMirrorRowCount.call(_this) > maxAllowedRows && kk--){
 			value = value.substring(0, value.length-1);
 			_writeToMirror.call(_this, value);
 		}
