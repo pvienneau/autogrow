@@ -517,6 +517,13 @@ var Autogrow = (function(){
 		return true;
 	}
 	
+	//getRowHeight: Get the height in pixels of a row of text in the textarea
+	Autogrow.prototype.getRowHeight = function(){
+		var _this = this;
+		
+		return _this.data.rowHeight;
+	}
+	
 	//getLastLine: Get the last line of the textarea element's innerHTML
 	Autogrow.prototype.getLastLine = function(){
 		var _this = this,
