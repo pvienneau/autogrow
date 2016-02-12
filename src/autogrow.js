@@ -267,7 +267,7 @@ var Autogrow = (function(){
 			'left': '-9999px',
 			'top': '-9999px'
 		};
-		var copyStyles = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'fontVariant', 'fontStretch', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'wordBreak', 'letterSpacing', 'textIndent', 'whiteSpace', 'wordWrap', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'borderRightWidth', 'borderRightStyle', 'borderLeftWidth', 'borderLeftStyle'];
+		var copyStyles = ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'fontVariant', 'fontStretch', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing', 'wordBreak', 'letterSpacing', 'textIndent', 'whiteSpace', 'wordWrap', /*'paddingTop',*/ 'paddingRight',/* 'paddingBottom',*/ 'paddingLeft', 'borderRightWidth', 'borderRightStyle', 'borderLeftWidth', 'borderLeftStyle'];
 		
 		//force line-heigth in px units
 		if(!textareaStyles.lineHeight.match(/^\d+px$/)){
